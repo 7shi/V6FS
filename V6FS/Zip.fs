@@ -5,7 +5,6 @@ module Zip
 open System
 open System.Collections.Generic
 open System.IO
-open System.IO.Compression
 open System.Text
 open Utils
 open Crc
@@ -87,7 +86,7 @@ type ZipDirHeader =
       fname:byte[] }
 
     static member Create time (attrs:FileAttributes) (rel:string) size1 crc (data:byte[]) pos =
-        let relb = Encoding.Default.GetBytes rel
+        let relb = Encoding.UTF8.GetBytes rel
         { version = 20us
           header  = ZipHeader.Create time relb size1 crc data pos
           _1      = 0us
@@ -121,71 +120,6 @@ type ZipDirHeader =
         bw.Write x.attrs
         bw.Write x.pos
         bw.Write x.fname
-
-let writeFile (list:List<ZipDirHeader>) (bw:BinaryWriter) path rel =
-    let len, data, crc =
-        use fs = new FileStream(path, FileMode.Open)
-        let len = fs.Length
-        let data, crc = Deflate.GetCompressBytes(fs)
-        uint32 len, data, crc
-    let p = uint32 bw.BaseStream.Position
-    let time = File.GetLastWriteTime path
-    let attrs = File.GetAttributes path
-    let ziph = ZipDirHeader.Create time attrs rel len crc data p
-    bw.Write [| byte 'P'; byte 'K'; 3uy; 4uy |]
-    ziph.header.Write bw
-    bw.Write ziph.fname
-    bw.Write data
-    list.Add(ziph)
-
-let rec writeDir (list:List<ZipDirHeader>) (bw:BinaryWriter) path rel =
-    let p = uint32 bw.BaseStream.Position
-    let time = Directory.GetLastWriteTime path
-    let attrs = File.GetAttributes path
-    let ziph = ZipDirHeader.Create time attrs (rel + "/") 0u 0u null p
-    bw.Write [| byte 'P'; byte 'K'; 3uy; 4uy |]
-    ziph.header.Write bw
-    bw.Write ziph.fname
-    list.Add(ziph)
-    
-    let di = new DirectoryInfo(path)
-    for fi in di.GetFiles() do
-        writeFile list bw fi.FullName (pathCombine(rel, fi.Name))
-    for di2 in di.GetDirectories() do
-        writeDir list bw di2.FullName (pathCombine(rel,di2.Name))
-
-let write (list:List<ZipDirHeader>) (bw:BinaryWriter) path rel =
-    if File.Exists path then writeFile list bw path rel
-                        else writeDir  list bw path rel
-
-let writeZip (bw:BinaryWriter) (files:string[]) =
-    let list = new List<ZipDirHeader>()
-    
-    for f in files do write list bw f (Path.GetFileName f)
-
-    let dir_start = bw.BaseStream.Position
-    for ziph in list do
-        bw.Write [| byte 'P'; byte 'K'; 1uy; 2uy |]
-        ziph.Write bw
-    let dir_len = bw.BaseStream.Position - dir_start
-    
-    bw.Write [| byte 'P'; byte 'K'; 5uy; 6uy |]
-    bw.Write 0us // number of this disk
-    bw.Write 0us // number of the disk with the start of the central directory
-    bw.Write (uint16 list.Count)
-    bw.Write (uint16 list.Count)
-    bw.Write (uint32 dir_len)
-    bw.Write (uint32 dir_start)
-    bw.Write 0us // zipfile comment length
-
-let Create (files:string[]) =
-    let dir = Path.GetDirectoryName files.[0]
-    let fn = if File.Exists(files.[0])
-             then Path.GetFileNameWithoutExtension(files.[0]) + ".zip"
-             else files.[0] + ".zip"
-    use fs1 = new FileStream(Path.Combine(dir, fn), FileMode.Create)
-    use bw = new BinaryWriter(fs1)
-    writeZip bw files
 
 let mkDir (path:string) =
     if not(Directory.Exists path) then
@@ -285,7 +219,7 @@ let getTopDir (list:List<ZipDirHeader>) =
     let mutable f = true
     while f && en.MoveNext() do
         let zipdh = en.Current
-        let fn = Encoding.Default.GetString zipdh.fname
+        let fn = Encoding.UTF8.GetString(zipdh.fname, 0, zipdh.fname.Length)
         if not(isAbsPath fn) then
             let p = fn.Replace('\\', '/').IndexOf('/')
             if p > 0 then
@@ -310,13 +244,13 @@ let Extract (zip:string) =
     
     for zipdh in list do
         let dt = zipdh.header.DateTime
-        let fn = Encoding.Default.GetString zipdh.fname
+        let fn = Encoding.UTF8.GetString(zipdh.fname, 0, zipdh.fname.Length)
         let path = mkRelPath dir fn
         let attrs = enum<FileAttributes>(int zipdh.attrs)
         if int(attrs &&& FileAttributes.Directory) <> 0 then
             mkDir path
             File.SetAttributes(path, attrs)
-            Directory.SetLastWriteTime(path, dt)
+            //Directory.SetLastWriteTime(path, dt)
         else
             fs.Position <- int64 zipdh.pos
             if br.ReadInt32() <> 0x04034b50 then
@@ -336,4 +270,4 @@ let Extract (zip:string) =
                 if crc <> zipdh.header.crc32 then
                     failwith("CRC が一致しません: \n\n" + fn)
             File.SetAttributes(path, attrs)
-            File.SetLastWriteTime(path, dt)
+            //File.SetLastWriteTime(path, dt)

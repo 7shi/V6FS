@@ -131,7 +131,7 @@ let getRoot(fsys:filsys) =
       Name  = "/"
       children = null }
 
-let Open(fs:FileStream) =
+let Open(fs:Stream) =
     let data = Array.zeroCreate<byte>(int fs.Length)
     fs.Read(data, 0, data.Length) |> ignore
     let fsys = readFileSystem(data, 512)
@@ -163,7 +163,7 @@ let rec writeDir(list:List<ZipDirHeader>, bw:BinaryWriter, e:Entry, rel:string) 
         (if e.INode.IsDir then writeDir else writeFile)
             (list, bw, e, pathCombine(rel, e.Name))
 
-let SaveZip(fs:FileStream, root:Entry) =
+let SaveZip(fs:Stream, root:Entry) =
     use bw = new BinaryWriter(fs)
     let list = new List<ZipDirHeader>()
     writeDir(list, bw, root, "")

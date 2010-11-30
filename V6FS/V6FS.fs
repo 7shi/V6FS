@@ -44,13 +44,26 @@ let readINode(data:byte[], ino:int) =
 let readAllBytes(x:inode) =
     let mutable i, pos, len = 0, 0, x.Length
     let ret = Array.zeroCreate<byte> len
-    while i < 8 && len > 0 do
-        let wlen =
-            if i = 7 || x.addr.[i + 1] = 0us then len else 512
-        array.Copy(x.data, int(x.addr.[i]) * 512, ret, pos, wlen)
-        pos <- pos + wlen
-        len <- len - wlen
-        i <- i + 1
+    if (int(x.mode) &&& ILARG) = 0 then
+        while i < 8 && len > 0 do
+            let wlen =
+                if len < 512 || i = 7 || x.addr.[i + 1] = 0us then len else 512
+            array.Copy(x.data, int(x.addr.[i]) * 512, ret, pos, wlen)
+            pos <- pos + wlen
+            len <- len - wlen
+            i <- i + 1
+    else
+        while i < 8 && len > 0 do
+            let mutable j = 0
+            let p = int(x.addr.[i]) * 512
+            while j < 512 && len > 0 do
+                let wlen =
+                    if len < 512 || j = 510 || (x.data.[p + j + 2] = 0uy && x.data.[p + j + 3] = 0uy) then len else 512
+                let b = BitConverter.ToUInt16(x.data, p + j)
+                array.Copy(x.data, int(b) * 512, ret, pos, wlen)
+                pos <- pos + wlen
+                len <- len - wlen
+                j <- j + 2
     ret
 
 let openRead(x:inode) =

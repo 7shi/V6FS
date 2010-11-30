@@ -83,13 +83,15 @@ type Entry =
     { FileSystem:filsys
       INode:inode
       Path:string
-      Name:string }
+      Name:string
+      mutable children:Entry[] }
     
     member private x.New(ino:int, path:string, name:string) =
         { FileSystem = x.FileSystem
           INode      = getINode(x.FileSystem, ino)
           Path       = path
-          Name       = name }
+          Name       = name
+          children   = null }
      
     member x.FullName = pathCombine(x.Path, x.Name)
     member x.Write(tw:TextWriter) = x.INode.Write(tw, x.FullName)
@@ -106,13 +108,18 @@ type Entry =
                 if ino <> 0 && not(isCurOrParent name) then
                     list.Add(x.New(ino, path, name))
             list.Sort(Comparison<Entry>(fun a b -> a.Name.CompareTo(b.Name)))
-        list.ToArray()
+        x.children <- list.ToArray()
+    
+    member x.Children =
+        if x.children = null then x.ReadDir()
+        x.children
 
 let getRoot(fsys:filsys) =
     { FileSystem = fsys
       INode = getINode(fsys, 1)
       Path  = ""
-      Name  = "/" }
+      Name  = "/"
+      children = null }
 
 let Open(fs:FileStream) =
     use sw = new StringWriter()
@@ -129,7 +136,8 @@ let Open(fs:FileStream) =
         let rec dir(e:Entry) =
             sw.WriteLine()
             e.Write sw
-            for e in e.ReadDir() do dir e
+            for e in e.Children do
+                dir e
         dir(getRoot fsys)
 #if DEBUG
 #else

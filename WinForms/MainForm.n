@@ -35,7 +35,7 @@ namespace WinForms
       when (openFileDialog1.ShowDialog(this) == DialogResult.OK)
       {
         def fs = FileStream(openFileDialog1.FileName, FileMode.Open);
-        textBox1.Text = V6FS.Open(fs);
+        textBox1.Text = V6FS.GetLog(fs);
         fs.Dispose();
       }
     }

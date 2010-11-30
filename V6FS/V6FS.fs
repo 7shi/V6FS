@@ -122,23 +122,26 @@ let getRoot(fsys:filsys) =
       children = null }
 
 let Open(fs:FileStream) =
+    let data = Array.zeroCreate<byte>(int fs.Length)
+    fs.Read(data, 0, data.Length) |> ignore
+    let fsys = readFileSystem(data, 512)
+    getRoot fsys
+
+let GetLog(fs:FileStream) =
     use sw = new StringWriter()
 #if DEBUG
     do
 #else
     try
 #endif
-        let data = Array.zeroCreate<byte>(int fs.Length)
-        fs.Read(data, 0, data.Length) |> ignore
-        
-        let fsys = readFileSystem(data, 512)
-        fsys.Write sw
+        let root = Open(fs)
+        root.FileSystem.Write sw
         let rec dir(e:Entry) =
             sw.WriteLine()
             e.Write sw
             for e in e.Children do
                 dir e
-        dir(getRoot fsys)
+        dir root
 #if DEBUG
 #else
     with

@@ -1,2 +1,10 @@
 UNIX v6 File System Viewer
-Convert SIMH disk image to ZIP
+
+- Extract file from SIMH disk image
+- Convert SIMH disk image to ZIP
+
+* License
+
+UNIX v6 is licensed under Caldera Ancient Unix License.
+Types derived from UNIX v6 is also licensed under it.
+Other original code is in the public domain.

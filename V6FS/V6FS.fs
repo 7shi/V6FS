@@ -1,4 +1,6 @@
-﻿module V6FS
+﻿// Caldera Ancient Unix License
+
+module V6FS
 
 open System
 open System.Collections.Generic
@@ -97,8 +99,7 @@ type inode =
       mutable size1:uint16  // least sig
       mutable addr:uint16[] // device addresses constituting file
       mutable atime:uint32
-      mutable mtime:uint32
-    }
+      mutable mtime:uint32 }
     
     static member Read(data:byte[], ino:int, path:string, name:string) =
         let offset = 1024 + 32 * (ino - 1)

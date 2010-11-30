@@ -1,4 +1,6 @@
-﻿using Nemerle.Collections;
+﻿// public domain
+
+using Nemerle.Collections;
 using Nemerle.Text;
 using Nemerle.Utility;
 

@@ -41,27 +41,30 @@ namespace WinForms
         try
 #endif
         {
-        def fs = FileStream(openFileDialog1.FileName, FileMode.Open);
-        root = V6FS.Open(fs);
-        fs.Dispose();
-        
-        root.FileSystem.Write(sw);
-        def dir(e:V6FS.Entry)
-        {
-          sw.WriteLine();
-          e.Write(sw);
-          foreach (child in e.Children)
-            dir(child);
-        }
-        dir(root);
+          def fs = FileStream(openFileDialog1.FileName, FileMode.Open);
+          root = V6FS.Open(fs);
+          fs.Dispose();
+          
+          root.FileSystem.Write(sw);
+          def dir(e:V6FS.Entry)
+          {
+            sw.WriteLine();
+            e.Write(sw);
+            foreach (child in e.Children)
+              dir(child);
+          }
+          dir(root);
+          miFileSaveZip.Enabled = true;
         }
 #if !DEBUG
         catch{
-          | e => sw.WriteLine(e.ToString());
+          | e =>
+            sw.WriteLine(e.ToString());
+            miFileSaveZip.Enabled = false;
+            root = null;
         }
 #endif
         textBox1.Text = sw.ToString();
-        miFileSaveZip.Enabled = true;
       }
     }
   

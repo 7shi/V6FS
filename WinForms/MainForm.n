@@ -20,6 +20,8 @@ namespace WinForms
   /// </summary>
   public partial class MainForm : Form
   {
+    private mutable root : V6FS.Entry;
+    
     public this()
     {
       InitializeComponent();
@@ -34,9 +36,57 @@ namespace WinForms
     {
       when (openFileDialog1.ShowDialog(this) == DialogResult.OK)
       {
+        def sw = StringWriter();
+#if !DEBUG
+        try
+#endif
+        {
         def fs = FileStream(openFileDialog1.FileName, FileMode.Open);
-        textBox1.Text = V6FS.GetLog(fs);
+        root = V6FS.Open(fs);
         fs.Dispose();
+        
+        root.FileSystem.Write(sw);
+        def dir(e:V6FS.Entry)
+        {
+          sw.WriteLine();
+          e.Write(sw);
+          foreach (child in e.Children)
+            dir(child);
+        }
+        dir(root);
+        }
+#if !DEBUG
+        catch{
+          | e => sw.WriteLine(e.ToString());
+        }
+#endif
+        textBox1.Text = sw.ToString();
+        miFileSaveZip.Enabled = true;
+      }
+    }
+  
+    private miFileSaveZip_Click (_ : object,  _ : System.EventArgs) : void
+    {
+      when (saveFileDialog1.ShowDialog(this) == DialogResult.OK)
+      {
+        def cur = Cursor.Current;
+        Cursor.Current = Cursors.WaitCursor;
+#if !DEBUG
+        try
+#endif
+        {
+          def fs = FileStream(saveFileDialog1.FileName, FileMode.Create);
+          V6FS.SaveZip(fs, root);
+          fs.Dispose();
+        }
+#if !DEBUG
+        catch{
+          | e => _ = MessageBox.Show(
+                       e.ToString(), Text,
+                       MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+        }
+#endif
+        Cursor.Current = cur;
       }
     }
   }

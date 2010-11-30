@@ -575,5 +575,4 @@ let GetCompressBytes (sin:Stream) =
     let ms = new MemoryStream()
     let w = new Writer(1, sin)
     w.Compress ms
-    System.Diagnostics.Debug.WriteLine((DateTime.Now - now).ToString())
     ms.ToArray(), w.Crc

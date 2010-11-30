@@ -31,10 +31,12 @@
       this.mainMenu1 = System.Windows.Forms.MainMenu(this.components);
       this.miFile = System.Windows.Forms.MenuItem();
       this.miFileOpen = System.Windows.Forms.MenuItem();
+      this.miFileSaveZip = System.Windows.Forms.MenuItem();
       this.miFileSep1 = System.Windows.Forms.MenuItem();
       this.miFileExit = System.Windows.Forms.MenuItem();
       this.openFileDialog1 = System.Windows.Forms.OpenFileDialog();
       this.textBox1 = System.Windows.Forms.TextBox();
+      this.saveFileDialog1 = System.Windows.Forms.SaveFileDialog();
       this.SuspendLayout();
       // 
       // mainMenu1
@@ -47,6 +49,7 @@
       this.miFile.Index = 0;
       this.miFile.MenuItems.AddRange(array[
                   this.miFileOpen, 
+                  this.miFileSaveZip, 
                   this.miFileSep1, 
                   this.miFileExit]);
       this.miFile.Text = "ファイル(&F)";
@@ -57,14 +60,21 @@
       this.miFileOpen.Text = "開く(&O)";
       this.miFileOpen.Click += System.EventHandler(this.miFileOpen_Click);
       // 
+      // miFileSaveZip
+      // 
+      this.miFileSaveZip.Enabled = false;
+      this.miFileSaveZip.Index = 1;
+      this.miFileSaveZip.Text = "&Zipで保存";
+      this.miFileSaveZip.Click += System.EventHandler(this.miFileSaveZip_Click);
+      // 
       // miFileSep1
       // 
-      this.miFileSep1.Index = 1;
+      this.miFileSep1.Index = 2;
       this.miFileSep1.Text = "-";
       // 
       // miFileExit
       // 
-      this.miFileExit.Index = 2;
+      this.miFileExit.Index = 3;
       this.miFileExit.Text = "終了(&X)";
       this.miFileExit.Click += System.EventHandler(this.miFileExit_Click);
       // 
@@ -79,6 +89,10 @@
       this.textBox1.Size = System.Drawing.Size(292,  266);
       this.textBox1.TabIndex = 0;
       this.textBox1.WordWrap = false;
+      // 
+      // saveFileDialog1
+      // 
+      this.saveFileDialog1.Filter = "Zip ファイル (*.zip)|*.zip|すべてのファイル (*.*)|*.*";
       // 
       // MainForm
       // 
@@ -106,5 +120,9 @@
     private mutable openFileDialog1 : System.Windows.Forms.OpenFileDialog;
   
     private mutable textBox1 : System.Windows.Forms.TextBox;
+  
+    private mutable saveFileDialog1 : System.Windows.Forms.SaveFileDialog;
+  
+    private mutable miFileSaveZip : System.Windows.Forms.MenuItem;
   }
 }

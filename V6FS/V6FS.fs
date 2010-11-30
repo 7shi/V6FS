@@ -8,6 +8,8 @@ open System.IO
 open System.Text
 open V6Type
 open Utils
+open Crc
+open Zip
 
 let empty =
     { data   = null
@@ -113,6 +115,14 @@ type Entry =
     member x.Children =
         if x.children = null then x.ReadDir()
         x.children
+    
+    member x.FileAttributes =
+        let mutable ret = enum<FileAttributes> 0
+        let mode = int <| x.INode.mode
+        if (mode &&& IREAD ) =  0 then ret <- ret ||| FileAttributes.Hidden
+        if (mode &&& IWRITE) =  0 then ret <- ret ||| FileAttributes.ReadOnly
+        if (mode &&& IFDIR ) <> 0 then ret <- ret ||| FileAttributes.Directory
+        ret
 
 let getRoot(fsys:filsys) =
     { FileSystem = fsys
@@ -127,24 +137,48 @@ let Open(fs:FileStream) =
     let fsys = readFileSystem(data, 512)
     getRoot fsys
 
-let GetLog(fs:FileStream) =
-    use sw = new StringWriter()
-#if DEBUG
-    do
-#else
-    try
-#endif
-        let root = Open(fs)
-        root.FileSystem.Write sw
-        let rec dir(e:Entry) =
-            sw.WriteLine()
-            e.Write sw
-            for e in e.Children do
-                dir e
-        dir root
-#if DEBUG
-#else
-    with
-    | e -> sw.WriteLine(e.ToString())
-#endif
-    sw.ToString()
+let writeFile(list:List<ZipDirHeader>, bw:BinaryWriter, e:Entry, rel:string) =
+    let len, data, crc =
+        use fs = openRead e.INode
+        let len = fs.Length
+        let data, crc = Deflate.GetCompressBytes(fs)
+        uint32 len, data, crc
+    let p = uint32 bw.BaseStream.Position
+    let ziph = ZipDirHeader.Create e.INode.LastWriteTime e.FileAttributes rel len crc data p
+    bw.Write [| byte 'P'; byte 'K'; 3uy; 4uy |]
+    ziph.header.Write bw
+    bw.Write ziph.fname
+    bw.Write data
+    list.Add(ziph)
+
+let rec writeDir(list:List<ZipDirHeader>, bw:BinaryWriter, e:Entry, rel:string) =
+    if rel <> "" then
+        let p = uint32 bw.BaseStream.Position
+        let ziph = ZipDirHeader.Create e.INode.LastWriteTime e.FileAttributes (rel + "/") 0u 0u null p
+        bw.Write [| byte 'P'; byte 'K'; 3uy; 4uy |]
+        ziph.header.Write bw
+        bw.Write ziph.fname
+        list.Add(ziph)
+    for e in e.Children do
+        (if e.INode.IsDir then writeDir else writeFile)
+            (list, bw, e, pathCombine(rel, e.Name))
+
+let SaveZip(fs:FileStream, root:Entry) =
+    use bw = new BinaryWriter(fs)
+    let list = new List<ZipDirHeader>()
+    writeDir(list, bw, root, "")
+
+    let dir_start = bw.BaseStream.Position
+    for ziph in list do
+        bw.Write [| byte 'P'; byte 'K'; 1uy; 2uy |]
+        ziph.Write bw
+    let dir_len = bw.BaseStream.Position - dir_start
+    
+    bw.Write [| byte 'P'; byte 'K'; 5uy; 6uy |]
+    bw.Write 0us // number of this disk
+    bw.Write 0us // number of the disk with the start of the central directory
+    bw.Write (uint16 list.Count)
+    bw.Write (uint16 list.Count)
+    bw.Write (uint32 dir_len)
+    bw.Write (uint32 dir_start)
+    bw.Write 0us // zipfile comment length

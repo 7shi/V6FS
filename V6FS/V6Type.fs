@@ -79,20 +79,20 @@ let getMode(mode:int) =
  *)
 
 type inode =
-    { data:byte[]
-      inode:int             // i number, 1-to-1 with device address
-      path:string
-      name:string
-      offset:int
-      mutable mode:uint16
-      mutable nlink:byte    // directory entries
-      mutable uid:byte      // owner
-      mutable gid:byte      // group of owner
-      mutable size0:byte    // most significant of size
-      mutable size1:uint16  // least sig
-      mutable addr:uint16[] // device addresses constituting file
-      mutable atime:uint32
-      mutable mtime:uint32 }
+    { data          :byte[]
+      offset        :int
+      path          :string
+      name          :string
+      inode         :int        // i number, 1-to-1 with device address
+      mutable mode  :uint16
+      mutable nlink :byte       // directory entries
+      mutable uid   :byte       // owner
+      mutable gid   :byte       // group of owner
+      mutable size0 :byte       // most significant of size
+      mutable size1 :uint16     // least sig
+      mutable addr  :uint16[]   // device addresses constituting file
+      mutable atime :uint32
+      mutable mtime :uint32 }
     
     member x.Length  = (int(x.size0) <<< 16) ||| int(x.size1)
     member x.LastAccessTime = getTime x.atime
@@ -101,7 +101,8 @@ type inode =
     member x.IsDir = (int(x.mode) &&& IFDIR ) <> 0
     
     member x.Write(tw:TextWriter) =
-        tw.WriteLine("[{0}]", x.FullName)
+        tw.WriteLine("[{0:x8}] {1}", x.offset, x.FullName)
+        tw.WriteLine("inode : {0}", x.inode)
         tw.WriteLine("mode  : {0}", getMode((int)x.mode))
         tw.WriteLine("nlink : {0}", x.nlink)
         tw.WriteLine("uid   : {0}", x.uid)
@@ -124,7 +125,8 @@ type inode =
  *)
 
 type filsys =
-    { data:byte[]
+    { data          :byte[]
+      offset        :int
       mutable isize :uint16   // size in blocks of I list
       mutable fsize :uint16   // size in blocks of entire volume
       mutable nfree :uint16   // number of in core free blocks (0-100)
@@ -141,6 +143,7 @@ type filsys =
     member x.Time = getTime x.time
     
     member x.Write(tw:TextWriter) =
+        tw.WriteLine("[{0:x8}]", x.offset)
         tw.WriteLine("isize : {0}", x.isize)
         tw.WriteLine("fsize : {0}", x.fsize)
         tw.WriteLine("nfree : {0}", x.nfree)

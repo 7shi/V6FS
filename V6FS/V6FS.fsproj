@@ -9,7 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>V6FS</RootNamespace>
     <AssemblyName>V6FS</AssemblyName>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <Name>V6FS</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -33,9 +33,13 @@
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
+    <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Utils.fs" />
+    <Compile Include="Crc.fs" />
+    <Compile Include="Deflate.fs" />
+    <Compile Include="Zip.fs" />
     <Compile Include="V6Type.fs" />
     <Compile Include="V6FS.fs" />
   </ItemGroup>

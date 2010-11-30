@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Linq;
+using System.IO;
 using System.Text;
 using System.Windows.Forms;
 
@@ -33,7 +33,11 @@ namespace WinForms
     private miFileOpen_Click (_ : object,  _ : System.EventArgs) : void
     {
       when (openFileDialog1.ShowDialog(this) == DialogResult.OK)
-        textBox1.Text = V6FS.Open(openFileDialog1.FileName);
+      {
+        def fs = FileStream(openFileDialog1.FileName, FileMode.Open);
+        textBox1.Text = V6FS.Open(fs);
+        fs.Dispose();
+      }
     }
   }
 }

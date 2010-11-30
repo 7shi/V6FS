@@ -111,19 +111,20 @@ let getINodes(x:filsys, ino:inode) =
 
 let getRoot(x:filsys) = getINode(x, 1, "", "/")
 
-let Open(fn:string) =
+let Open(fs:FileStream) =
     use sw = new StringWriter()
     try
-        let data = File.ReadAllBytes(fn)
-        let fs = readFileSystem(data, 512)
+        let data = Array.zeroCreate<byte>(int fs.Length)
+        fs.Read(data, 0, data.Length) |> ignore
         
-        fs.Write sw
+        let fsys = readFileSystem(data, 512)
+        fsys.Write sw
         let rec dir(inode:inode) =
             sw.WriteLine()
             inode.Write sw
-            for inode in getINodes(fs, inode) do
+            for inode in getINodes(fsys, inode) do
                 dir inode
-        dir(getRoot fs)
+        dir(getRoot fsys)
         
     with
     | e -> sw.WriteLine(e.ToString())

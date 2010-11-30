@@ -88,7 +88,7 @@
       this.Controls.Add(this.textBox1);
       this.Menu = this.mainMenu1;
       this.Name = "MainForm";
-      this.Text = "MainForm";
+      this.Text = "V6FS";
       this.ResumeLayout(false);
       this.PerformLayout();
     }

@@ -10,10 +10,12 @@ open Utils
 open Crc
 
 let getDosDate (dt:DateTime) =
-    uint16(((dt.Year - 1980) <<< 9) ||| (dt.Month <<< 5) ||| dt.Day)
+    if dt.Year < 1980 then uint16((1 <<< 5) ||| 1) else
+        uint16(((dt.Year - 1980) <<< 9) ||| (dt.Month <<< 5) ||| dt.Day)
 
 let getDosTime (dt:DateTime) =
-    uint16((dt.Hour <<< 11) ||| (dt.Minute <<< 5) ||| (dt.Second >>> 1))
+    if dt.Year < 1980 then 0us else
+        uint16((dt.Hour <<< 11) ||| (dt.Minute <<< 5) ||| (dt.Second >>> 1))
 
 let getDateTime (dd:uint16) (dt:uint16) =
     new DateTime(int(dd >>> 9) + 1980,

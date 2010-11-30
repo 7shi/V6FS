@@ -98,7 +98,7 @@ let readFileSystem(data:byte[], offset:int) =
 
 let getINode(x:filsys, ino:int, path:string, name:string) =
     let ret = x.inodes.[ino - 1]
-    if ret.inode <> 0 then ret else
+    if ret <> empty then ret else
         let ret = readINode(x.data, ino, path, name)
         x.inodes.[ino - 1] <- ret
         ret
@@ -112,16 +112,19 @@ let getINodes(x:filsys, ino:inode) =
 let getRoot(x:filsys) = getINode(x, 1, "", "/")
 
 let Open(fn:string) =
-    let data = File.ReadAllBytes(fn)
-    let fs = readFileSystem(data, 512)
-    
     use sw = new StringWriter()
-    fs.Write sw
-    let rec dir(inode:inode) =
-        sw.WriteLine()
-        inode.Write sw
-        for inode in getINodes(fs, inode) do
-            dir inode
-    dir(getRoot fs)
-    
+    try
+        let data = File.ReadAllBytes(fn)
+        let fs = readFileSystem(data, 512)
+        
+        fs.Write sw
+        let rec dir(inode:inode) =
+            sw.WriteLine()
+            inode.Write sw
+            for inode in getINodes(fs, inode) do
+                dir inode
+        dir(getRoot fs)
+        
+    with
+    | e -> sw.WriteLine(e.ToString())
     sw.ToString()

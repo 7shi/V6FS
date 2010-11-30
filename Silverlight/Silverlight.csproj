@@ -18,7 +18,7 @@
     <SupportedCultures>ja</SupportedCultures>
     <XapOutputs>true</XapOutputs>
     <GenerateSilverlightManifest>true</GenerateSilverlightManifest>
-    <XapFilename>Silverlight.xap</XapFilename>
+    <XapFilename>V6FS.xap</XapFilename>
     <SilverlightManifestTemplate>Properties\AppManifest.xml</SilverlightManifestTemplate>
     <SilverlightAppEntry>Silverlight.App</SilverlightAppEntry>
     <TestPageFileName>SilverlightTestPage.html</TestPageFileName>

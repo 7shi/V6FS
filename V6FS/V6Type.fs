@@ -81,8 +81,6 @@ let getMode(mode:int) =
 type inode =
     { data          :byte[]
       offset        :int
-      path          :string
-      name          :string
       inode         :int        // i number, 1-to-1 with device address
       mutable mode  :uint16
       mutable nlink :byte       // directory entries
@@ -97,11 +95,10 @@ type inode =
     member x.Length  = (int(x.size0) <<< 16) ||| int(x.size1)
     member x.LastAccessTime = getTime x.atime
     member x.LastWriteTime  = getTime x.mtime
-    member x.FullName = pathCombine(x.path, x.name)
     member x.IsDir = (int(x.mode) &&& IFDIR ) <> 0
     
-    member x.Write(tw:TextWriter) =
-        tw.WriteLine("[{0:x8}] {1}", x.offset, x.FullName)
+    member x.Write(tw:TextWriter, path:string) =
+        tw.WriteLine("[{0:x8}] {1}", x.offset, path)
         tw.WriteLine("inode : {0}", x.inode)
         tw.WriteLine("mode  : {0}", getMode((int)x.mode))
         tw.WriteLine("nlink : {0}", x.nlink)

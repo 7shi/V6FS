@@ -9,20 +9,10 @@ open System.Text
 open V6Type
 open Utils
 
-type Entry =
-    { INode:int
-      Name:string }
-    
-    static member Read(br:BinaryReader) =
-        { INode = int <| br.ReadUInt16()
-          Name  = getString(br.ReadBytes(14)) }
-
 let empty =
     { data   = null
       offset = 0
       inode  = 0
-      path   = null
-      name   = null
       mode   = 0us
       nlink  = 0uy
       uid    = 0uy
@@ -33,14 +23,12 @@ let empty =
       atime  = 0u
       mtime  = 0u }
 
-let readINode(data:byte[], ino:int, path:string, name:string) =
+let readINode(data:byte[], ino:int) =
     let offset = 1024 + 32 * (ino - 1)
     use br = getBinaryReader(data, offset)
     { data   = data
       offset = offset
       inode  = ino
-      path   = path
-      name   = name
       mode   = br.ReadUInt16()
       nlink  = br.ReadByte()
       uid    = br.ReadByte()
@@ -66,18 +54,6 @@ let readAllBytes(x:inode) =
 let openRead(x:inode) =
     new MemoryStream(readAllBytes x)
 
-let readDir(x:inode) =
-    let list = new List<Entry>()
-    if x.IsDir then
-        use br = new BinaryReader(openRead x)
-        let count = x.Length / 16
-        for i = 1 to count do
-            let e = Entry.Read(br)
-            if e.INode <> 0 && not(isCurOrParent e.Name) then
-                list.Add e
-        list.Sort(Comparison<Entry>(fun a b -> a.Name.CompareTo(b.Name)))
-    list.ToArray()
-
 let readFileSystem(data:byte[], offset:int) =
     use br = getBinaryReader(data, offset)
     let isize = br.ReadUInt16()
@@ -96,36 +72,68 @@ let readFileSystem(data:byte[], offset:int) =
       time   = readUInt32(br)
       inodes = Array.create<inode> (int(isize) * 16) empty }
 
-let getINode(x:filsys, ino:int, path:string, name:string) =
+let getINode(x:filsys, ino:int) =
     let ret = x.inodes.[ino - 1]
     if ret <> empty then ret else
-        let ret = readINode(x.data, ino, path, name)
+        let ret = readINode(x.data, ino)
         x.inodes.[ino - 1] <- ret
         ret
 
-let getINodes(x:filsys, ino:inode) =
-    let path = ino.FullName
-    let dirs = readDir ino
-    [| for e in dirs ->
-        getINode(x, e.INode, path, e.Name) |]
+type Entry =
+    { FileSystem:filsys
+      INode:inode
+      Path:string
+      Name:string }
+    
+    member private x.New(ino:int, path:string, name:string) =
+        { FileSystem = x.FileSystem
+          INode      = getINode(x.FileSystem, ino)
+          Path       = path
+          Name       = name }
+     
+    member x.FullName = pathCombine(x.Path, x.Name)
+    member x.Write(tw:TextWriter) = x.INode.Write(tw, x.FullName)
+    
+    member x.ReadDir() =
+        let list = new List<Entry>()
+        if x.INode.IsDir then
+            let path = x.FullName
+            use br = new BinaryReader(openRead x.INode)
+            let count = x.INode.Length / 16
+            for i = 1 to count do
+                let ino = int <| br.ReadUInt16()
+                let name = getString <| br.ReadBytes(14)
+                if ino <> 0 && not(isCurOrParent name) then
+                    list.Add(x.New(ino, path, name))
+            list.Sort(Comparison<Entry>(fun a b -> a.Name.CompareTo(b.Name)))
+        list.ToArray()
 
-let getRoot(x:filsys) = getINode(x, 1, "", "/")
+let getRoot(fsys:filsys) =
+    { FileSystem = fsys
+      INode = getINode(fsys, 1)
+      Path  = ""
+      Name  = "/" }
 
 let Open(fs:FileStream) =
     use sw = new StringWriter()
+#if DEBUG
+    do
+#else
     try
+#endif
         let data = Array.zeroCreate<byte>(int fs.Length)
         fs.Read(data, 0, data.Length) |> ignore
         
         let fsys = readFileSystem(data, 512)
         fsys.Write sw
-        let rec dir(inode:inode) =
+        let rec dir(e:Entry) =
             sw.WriteLine()
-            inode.Write sw
-            for inode in getINodes(fsys, inode) do
-                dir inode
+            e.Write sw
+            for e in e.ReadDir() do dir e
         dir(getRoot fsys)
-        
+#if DEBUG
+#else
     with
     | e -> sw.WriteLine(e.ToString())
+#endif
     sw.ToString()

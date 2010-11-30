@@ -1,0 +1,37 @@
+﻿using Nemerle.Collections;
+using Nemerle.Text;
+using Nemerle.Utility;
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+
+namespace WinForms
+{
+  /// <summary>
+  /// Description of MainForm.
+  /// </summary>
+  public partial class MainForm : Form
+  {
+    public this()
+    {
+      InitializeComponent();
+    }
+  
+    private miFileExit_Click (_ : object,  _ : System.EventArgs) : void
+    {
+      Close();
+    }
+  
+    private miFileOpen_Click (_ : object,  _ : System.EventArgs) : void
+    {
+      when (openFileDialog1.ShowDialog(this) == DialogResult.OK)
+        textBox1.Text = V6FS.Open(openFileDialog1.FileName);
+    }
+  }
+}

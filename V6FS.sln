@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{EDCC3B85-0BAD-11DB-BC1A-00112FDE8B61}") = "WinForms", "WinForms\WinForms.nproj", "{4F9911D4-82CB-4611-85AD-76BE7DDB6EC6}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "V6FS", "V6FS\V6FS.fsproj", "{F80DB103-06F5-4ECE-B66A-2E585CAE9181}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4F9911D4-82CB-4611-85AD-76BE7DDB6EC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F9911D4-82CB-4611-85AD-76BE7DDB6EC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F9911D4-82CB-4611-85AD-76BE7DDB6EC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F9911D4-82CB-4611-85AD-76BE7DDB6EC6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F80DB103-06F5-4ECE-B66A-2E585CAE9181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F80DB103-06F5-4ECE-B66A-2E585CAE9181}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F80DB103-06F5-4ECE-B66A-2E585CAE9181}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F80DB103-06F5-4ECE-B66A-2E585CAE9181}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

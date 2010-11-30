@@ -17,6 +17,22 @@ type Entry =
         { INode = int <| br.ReadUInt16()
           Name  = getString(br.ReadBytes(14)) }
 
+let empty =
+    { data   = null
+      offset = 0
+      inode  = 0
+      path   = null
+      name   = null
+      mode   = 0us
+      nlink  = 0uy
+      uid    = 0uy
+      gid    = 0uy
+      size0  = 0uy
+      size1  = 0us
+      addr   = null
+      atime  = 0u
+      mtime  = 0u }
+
 let readINode(data:byte[], ino:int, path:string, name:string) =
     let offset = 1024 + 32 * (ino - 1)
     use br = getBinaryReader(data, offset)
@@ -64,9 +80,10 @@ let readDir(x:inode) =
 
 let readFileSystem(data:byte[], offset:int) =
     use br = getBinaryReader(data, offset)
+    let isize = br.ReadUInt16()
     { data   = data
       offset = offset
-      isize  = br.ReadUInt16()
+      isize  = isize
       fsize  = br.ReadUInt16()
       nfree  = br.ReadUInt16()
       free   = [| for _ in 0..99 -> br.ReadUInt16() |]
@@ -77,13 +94,13 @@ let readFileSystem(data:byte[], offset:int) =
       fmod   = br.ReadByte()
       ronly  = br.ReadByte()
       time   = readUInt32(br)
-      inodes = new Dictionary<int, inode>() }
+      inodes = Array.create<inode> (int(isize) * 16) empty }
 
 let getINode(x:filsys, ino:int, path:string, name:string) =
-    let ok, ret = x.inodes.TryGetValue(ino)
-    if ok then ret else
+    let ret = x.inodes.[ino - 1]
+    if ret.inode <> 0 then ret else
         let ret = readINode(x.data, ino, path, name)
-        x.inodes.Add(ino, ret)
+        x.inodes.[ino - 1] <- ret
         ret
 
 let getINodes(x:filsys, ino:inode) =

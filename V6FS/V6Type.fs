@@ -138,7 +138,7 @@ type filsys =
       mutable fmod  :byte     // super block modified flag
       mutable ronly :byte     // mounted read-only flag
       time          :uint32   // current date of last update
-      inodes        :Dictionary<int, inode> }
+      inodes        :inode[] }
     
     member x.Time = getTime x.time
     

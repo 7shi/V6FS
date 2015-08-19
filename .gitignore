@@ -1,4 +1,5 @@
 *.suo
+*.exe
 Bin/
 bin/
 obj/
